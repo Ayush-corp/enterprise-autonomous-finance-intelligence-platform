@@ -1,7 +1,3 @@
-APP_NAME = "Autonomous Investing Agent"
-
-VERSION = "1.0.0"
-
 BUY = "BUY"
 SELL = "SELL"
 HOLD = "HOLD"
@@ -9,3 +5,16 @@ HOLD = "HOLD"
 LOW = "LOW"
 MEDIUM = "MEDIUM"
 HIGH = "HIGH"
+
+SUPPORTED_LLMS = {
+    "openai",
+    "google",
+}
+
+SUPPORTED_MARKET_PROVIDERS = {
+    "yfinance",
+}
+
+SUPPORTED_VECTOR_DBS = {
+    "chroma",
+}
