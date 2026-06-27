@@ -1,43 +1,71 @@
 from functools import lru_cache
 
+from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
 
-    # Environment
-    env: str = "development"
+    # ----------------------------
+    # Application
+    # ----------------------------
 
+    app_name: str = Field(default="Autonomous Investing Agent")
+    app_version: str = Field(default="2.0.0")
+
+    environment: str = "development"
+
+    debug: bool = True
+
+    # ----------------------------
     # LLM
-    llm_provider: str = "openai"
-    llm_model: str = "gpt-5.5"
+    # ----------------------------
+
+    llm_provider: str
+
+    llm_model: str
 
     openai_api_key: str = ""
+
     google_api_key: str = ""
 
-    temperature: float = 0.2
+    temperature: float
 
+    max_tokens: int
+
+    # ----------------------------
     # Market
+    # ----------------------------
 
-    market_provider: str = "yfinance"
+    market_provider: str
 
+    # ----------------------------
     # News
+    # ----------------------------
 
-    news_provider: str = "google"
+    news_provider: str
 
+    # ----------------------------
     # Memory
+    # ----------------------------
 
-    vector_db: str = "chroma"
-    chroma_path: str = "data/chroma"
+    vector_db: str
 
-    # Logging
+    chroma_path: str
 
-    log_level: str = "INFO"
-
+    # ----------------------------
     # Network
+    # ----------------------------
 
-    request_timeout: int = 30
-    max_retries: int = 3
+    request_timeout: int
+
+    max_retries: int
+
+    # ----------------------------
+    # Logging
+    # ----------------------------
+
+    log_level: str
 
     model_config = SettingsConfigDict(
         env_file=".env",
@@ -47,7 +75,7 @@ class Settings(BaseSettings):
 
 
 @lru_cache
-def get_settings():
+def get_settings() -> Settings:
     return Settings()
 
 
