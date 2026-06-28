@@ -1,34 +1,46 @@
-from infrastructure.market.yfinance_service import YFinanceMarketService
-from infrastructure.llm.openai_service import OpenAIService
-from infrastructure.memory.chroma_service import ChromaMemoryService
+from functools import lru_cache
 
-_market_service = None
-_llm_service = None
-_memory_service = None
+from infrastructure.market.yfinance_service import (
+    YFinanceMarketService,
+)
+
+from infrastructure.news.news_service import (
+    DummyNewsService,
+)
+
+from infrastructure.llm.openai_service import (
+    OpenAIService,
+)
+
+from infrastructure.memory.chroma_repository import (
+    ChromaMemoryRepository,
+)
+
+from infrastructure.memory.memory_service import (
+    DefaultMemoryService,
+)
 
 
+@lru_cache
 def get_market_service():
-    global _market_service
-
-    if _market_service is None:
-        _market_service = YFinanceMarketService()
-
-    return _market_service
+    return YFinanceMarketService()
 
 
+@lru_cache
+def get_news_service():
+    return DummyNewsService()
+
+
+@lru_cache
 def get_llm_service():
-    global _llm_service
-
-    if _llm_service is None:
-        _llm_service = OpenAIService()
-
-    return _llm_service
+    return OpenAIService()
 
 
+@lru_cache
 def get_memory_service():
-    global _memory_service
 
-    if _memory_service is None:
-        _memory_service = ChromaMemoryService()
+    repository = ChromaMemoryRepository()
 
-    return _memory_service
+    return DefaultMemoryService(
+        repository,
+    )
