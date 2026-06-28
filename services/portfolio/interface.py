@@ -1,8 +1,8 @@
 from abc import ABC, abstractmethod
 
 
-class LLMService(ABC):
+class PortfolioService(ABC):
 
     @abstractmethod
-    def generate(self, prompt: str) -> str:
+    def evaluate(self, portfolio):
         pass
