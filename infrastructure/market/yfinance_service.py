@@ -1,13 +1,17 @@
 import yfinance as yf
 
 from domain import MarketSnapshot
+from domain.enums import Trend
+
 from services.market.interface import MarketDataService
 from app.core.exceptions import MarketDataError
+from app.config.constants import SMA_WINDOW
+
 
 
 class YFinanceMarketService(MarketDataService):
 
-    def get_market_snapshot(self, symbol: str) -> MarketSnapshot:
+    async def get_market_snapshot(self, symbol: str) -> MarketSnapshot:
 
         try:
 
@@ -35,10 +39,10 @@ class YFinanceMarketService(MarketDataService):
                 raise MarketDataError("Volume data missing")
 
             close = float(close_series.iloc[-1])
-            sma20 = float(close_series.rolling(20).mean().iloc[-1])
+            sma20 = float(close_series.rolling(SMA_WINDOW).mean().iloc[-1])
             volume = float(volume_series.iloc[-1])
 
-            trend = "bullish" if close >= sma20 else "bearish"
+            trend = Trend.BULLISH if close >= sma20 else Trend.BEARISH
 
             return MarketSnapshot(
                 symbol=symbol,

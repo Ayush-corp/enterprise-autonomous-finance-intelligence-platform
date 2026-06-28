@@ -1,7 +1,7 @@
 from pydantic import BaseModel
-
+from domain.enums import RiskLevel
 
 class RiskAssessment(BaseModel):
-    level: str
+    level: RiskLevel
     score: float
-    explanation: str
+    reasoning: str
