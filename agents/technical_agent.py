@@ -1,20 +1,30 @@
-# agents/technical_agent.py
+from agents.base import BaseAgent
+from domain.graph_state import GraphState
+from domain.technical import TechnicalAnalysis
+from services.llm.service import LLMService
 
-from tools.market_tools import get_stock_data
-from tools.indicators import compute_indicators
 
-def technical_agent(state):
-    print("Technical agent processing state:", state)
-    df = get_stock_data(state["stock"])
-    df = compute_indicators(df)
+class TechnicalAgent(BaseAgent[GraphState, GraphState, TechnicalAnalysis]):
+    name = "technical"
 
-    latest = df.iloc[-1]
+    def __init__(self, llm_service: LLMService) -> None:
+        super().__init__()
+        self._llm_service = llm_service
 
-    state["technical_data"] = {
-        "sma20": latest["sma20"],
-        "rsi": latest["rsi"],
-        "volatility": latest["volatility"],
-        "close": latest["Close"]
-    }
+    def validate(self, agent_input: GraphState) -> None:
+        if agent_input.market is None:
+            raise ValueError("market snapshot is required for technical analysis")
 
-    return state
+    async def execute(self, prepared_input: GraphState) -> TechnicalAnalysis:
+        result = await self._llm_service.structured(
+            "You are an institutional technical analyst for Indian equities.",
+            (
+                f"Symbol: {prepared_input.symbol}\n"
+                f"Market snapshot: {prepared_input.market.model_dump() if prepared_input.market else {}}\n"
+                "Return a conservative technical analysis."
+            ),
+            TechnicalAnalysis,
+        )
+        if result.structured is None:
+            raise ValueError("technical analysis was not returned")
+        return result.structured

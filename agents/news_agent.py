@@ -1,31 +1,18 @@
-# agents/news_agent.py
+from agents.base import BaseAgent
+from domain.news import NewsAnalysis
+from infrastructure.news.provider import NewsProvider
 
-from tools.llm_client import call_llm
-import requests
 
-def fetch_news(stock):
-    # simple hack: you can replace with NewsAPI / scraping
-    url = f"https://newsapi.org/v2/everything?q={stock}&apiKey=YOUR_KEY"
-    return requests.get(url).json()
+class NewsAgent(BaseAgent[str, str, NewsAnalysis]):
+    name = "news"
 
-def news_agent(state):
-    print("News agent processing state:", state)
-    articles = fetch_news(state["stock"])
+    def __init__(self, provider: NewsProvider) -> None:
+        super().__init__()
+        self._provider = provider
 
-    headlines = [a["title"] for a in articles.get("articles", [])[:10]]
+    def validate(self, agent_input: str) -> None:
+        if not agent_input.strip():
+            raise ValueError("symbol is required")
 
-    summary = call_llm(
-        system="You are a financial news analyst.",
-        user=f"""
-        Analyze sentiment and impact of these headlines:
-        {headlines}
-
-        Return:
-        - sentiment (positive/negative/neutral)
-        - key risks
-        - catalysts
-        """
-    )
-
-    state["news_data"] = summary
-    return state
+    async def execute(self, prepared_input: str) -> NewsAnalysis:
+        return await self._provider.analyze(prepared_input.upper())

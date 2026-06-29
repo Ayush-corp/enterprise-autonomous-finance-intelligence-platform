@@ -1,12 +1,3 @@
-from typing import TypedDict
+from domain.graph_state import GraphState
 
-
-class GraphState(TypedDict):
-
-    symbol: str
-
-    market_data: dict
-
-    news_data: dict
-
-    recommendation: dict
+__all__ = ["GraphState"]

@@ -1,26 +1,26 @@
-# agents/forecast_agent.py
+from agents.base import BaseAgent
+from domain.forecast import Forecast
+from domain.graph_state import GraphState
+from services.llm.service import LLMService
 
-from tools.llm_client import call_llm
 
-def forecast_agent(state):
-    print("Forecast agent processing state:", state)
-    tech = state["technical_data"]
+class ForecastAgent(BaseAgent[GraphState, GraphState, Forecast]):
+    name = "forecast"
 
-    prediction = call_llm(
-        system="You are a quantitative analyst.",
-        user=f"""
-        Given:
-        Close: {tech['close']}
-        RSI: {tech['rsi']}
-        SMA20: {tech['sma20']}
-        Volatility: {tech['volatility']}
+    def __init__(self, llm_service: LLMService) -> None:
+        super().__init__()
+        self._llm_service = llm_service
 
-        Predict:
-        - next 5 day trend (up/down/sideways)
-        - confidence (0-1)
-        - target price range
-        """
-    )
+    def validate(self, agent_input: GraphState) -> None:
+        if not all([agent_input.market, agent_input.news, agent_input.technical, agent_input.fundamental, agent_input.macro]):
+            raise ValueError("market, news, technical, fundamental, and macro analyses are required")
 
-    state["forecast"] = prediction
-    return state
+    async def execute(self, prepared_input: GraphState) -> Forecast:
+        result = await self._llm_service.structured(
+            "You are a forecast analyst synthesizing multi-factor equity signals.",
+            f"Symbol: {prepared_input.symbol}\nState: {prepared_input.model_dump()}\nReturn a 5 trading day forecast.",
+            Forecast,
+        )
+        if result.structured is None:
+            raise ValueError("forecast was not returned")
+        return result.structured

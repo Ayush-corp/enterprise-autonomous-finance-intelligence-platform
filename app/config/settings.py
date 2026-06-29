@@ -21,51 +21,58 @@ class Settings(BaseSettings):
     # LLM
     # ----------------------------
 
-    llm_provider: str
+    llm_provider: str = "mock"
 
-    llm_model: str
+    llm_model: str = "gpt-4o-mini"
+    openai_model: str = "gpt-4o-mini"
 
     openai_api_key: str = ""
 
     google_api_key: str = ""
 
-    temperature: float
+    enable_live_llm: bool = False
 
-    max_tokens: int
+    temperature: float = 0.2
+
+    max_tokens: int = 1500
 
     # ----------------------------
     # Market
     # ----------------------------
 
-    market_provider: str
+    market_provider: str = "mock"
 
     # ----------------------------
     # News
     # ----------------------------
 
-    news_provider: str
+    news_provider: str = "mock"
 
     # ----------------------------
     # Memory
     # ----------------------------
 
-    vector_db: str
+    vector_db: str = "chroma"
 
-    chroma_path: str
+    chroma_path: str = "./.chroma"
 
     # ----------------------------
     # Network
     # ----------------------------
 
-    request_timeout: int
+    request_timeout: int = 30
 
-    max_retries: int
+    max_retries: int = 3
 
     # ----------------------------
     # Logging
     # ----------------------------
 
-    log_level: str
+    log_level: str = "INFO"
+
+    langsmith_api_key: str = ""
+    langsmith_project: str = ""
+    redis_url: str = ""
 
     model_config = SettingsConfigDict(
         env_file=".env",

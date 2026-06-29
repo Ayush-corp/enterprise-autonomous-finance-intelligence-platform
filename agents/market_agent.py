@@ -1,31 +1,18 @@
-# agents/market_agent.py
+from domain.market import MarketSnapshot
+from infrastructure.market.provider import MarketDataProvider
+from agents.base import BaseAgent
 
-from tools.market_tools import get_stock_data
-import pandas as pd
 
-def market_agent(state):
-    print("Market agent processing state:", state)
-    stock = state["stock"]
+class MarketAgent(BaseAgent[str, str, MarketSnapshot]):
+    name = "market"
 
-    df = get_stock_data(stock)
+    def __init__(self, provider: MarketDataProvider) -> None:
+        super().__init__()
+        self._provider = provider
 
-    # safety: flatten columns if needed
-    if isinstance(df.columns, pd.MultiIndex):
-        df.columns = df.columns.get_level_values(0)
+    def validate(self, agent_input: str) -> None:
+        if not agent_input.strip():
+            raise ValueError("symbol is required")
 
-    df = df.dropna()
-
-    close_series = df["Close"]
-
-    latest_close = float(close_series.iloc[-1])
-    latest_volume = float(df["Volume"].iloc[-1])
-
-    sma20 = float(close_series.rolling(20).mean().iloc[-1])
-
-    state["market_data"] = {
-        "close": latest_close,
-        "volume": latest_volume,
-        "sma20": sma20
-    }
-
-    return state
+    async def execute(self, prepared_input: str) -> MarketSnapshot:
+        return await self._provider.get_snapshot(prepared_input.upper())
