@@ -1,11 +1,7 @@
-from __future__ import annotations
-
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, Field
 
 
 class FinancialRatios(BaseModel):
-    model_config = ConfigDict(extra="forbid")
-
     pe: float
     pb: float
     roe: float
@@ -15,13 +11,11 @@ class FinancialRatios(BaseModel):
 
 
 class FundamentalAnalysis(BaseModel):
-    model_config = ConfigDict(extra="forbid")
-
     symbol: str
     valuation: str
     quality: str
     growth: str
     financial_health: str
-    confidence: float
+    confidence: float = Field(ge=0.0, le=1.0)
     summary: str
     ratios: FinancialRatios | None = None

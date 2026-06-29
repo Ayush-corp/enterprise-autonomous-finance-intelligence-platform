@@ -1,29 +1,19 @@
-from __future__ import annotations
+from typing import Any, Generic, TypeVar
 
-from typing import Any, Literal
-
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, Field
 
 
-class LLMMessage(BaseModel):
-    model_config = ConfigDict(extra="forbid")
-
-    role: Literal["system", "user", "assistant", "tool"]
-    content: str
+T = TypeVar("T", bound=BaseModel)
 
 
 class LLMUsage(BaseModel):
-    model_config = ConfigDict(extra="forbid")
-
-    prompt_tokens: int = Field(default=0)
-    completion_tokens: int = Field(default=0)
-    total_tokens: int = Field(default=0)
+    prompt_tokens: int | None = None
+    completion_tokens: int | None = None
+    total_tokens: int | None = None
 
 
-class LLMResponse(BaseModel):
-    model_config = ConfigDict(extra="forbid")
-
-    content: Any
-    model: str
-    usage: LLMUsage
-    finish_reason: str | None = None
+class LLMResult(BaseModel, Generic[T]):
+    content: str | None = None
+    structured: T | None = None
+    usage: LLMUsage = Field(default_factory=LLMUsage)
+    metadata: dict[str, Any] = Field(default_factory=dict)

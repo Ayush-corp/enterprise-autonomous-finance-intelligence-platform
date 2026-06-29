@@ -1,33 +1,26 @@
-from __future__ import annotations
-
 from abc import ABC, abstractmethod
-from typing import Sequence, Type
+from typing import TypeVar
 
 from pydantic import BaseModel
 
-from infrastructure.llm.models import (
-    LLMMessage,
-    LLMResponse,
-)
+from infrastructure.llm.models import LLMResult
+
+
+T = TypeVar("T", bound=BaseModel)
 
 
 class LLMProvider(ABC):
+    name: str
 
     @abstractmethod
-    async def chat(
-        self,
-        *,
-        messages: Sequence[LLMMessage],
-        temperature: float = 0.0,
-    ) -> LLMResponse:
-        ...
+    async def complete(self, system_prompt: str, user_prompt: str) -> LLMResult[BaseModel]:
+        raise NotImplementedError
 
     @abstractmethod
-    async def structured_chat(
+    async def structured(
         self,
-        *,
-        messages: Sequence[LLMMessage],
-        response_model: Type[BaseModel],
-        temperature: float = 0.0,
-    ) -> BaseModel:
-        ...
+        system_prompt: str,
+        user_prompt: str,
+        response_model: type[T],
+    ) -> LLMResult[T]:
+        raise NotImplementedError

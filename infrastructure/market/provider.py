@@ -1,33 +1,11 @@
-from __future__ import annotations
-
 from abc import ABC, abstractmethod
+
+from domain.market import MarketSnapshot
 
 
 class MarketDataProvider(ABC):
+    name: str
 
     @abstractmethod
-    async def technical_indicators(
-        self,
-        symbol: str,
-    ) -> str:
-        ...
-
-    @abstractmethod
-    async def fundamentals(
-        self,
-        symbol: str,
-    ) -> str:
-        ...
-
-    @abstractmethod
-    async def macro_data(
-        self,
-    ) -> str:
-        ...
-
-    @abstractmethod
-    async def quote(
-        self,
-        symbol: str,
-    ) -> str:
-        ...
+    async def get_snapshot(self, symbol: str) -> MarketSnapshot:
+        raise NotImplementedError

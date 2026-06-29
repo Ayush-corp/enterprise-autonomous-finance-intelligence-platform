@@ -1,17 +1,19 @@
-from pydantic import BaseModel
-from domain.enums import Sentiment
+from pydantic import BaseModel, Field
 
 
 class NewsArticle(BaseModel):
     title: str
-    summary: str
     source: str
     published_at: str
-    sentiment: Sentiment
-    confidence: float
+    sentiment: str
+    score: float
 
 
 class NewsAnalysis(BaseModel):
-    articles: list[NewsArticle]
-    overall_sentiment: Sentiment
+    symbol: str
+    sentiment: str
+    key_risks: list[str]
+    catalysts: list[str]
     confidence: float
+    summary: str
+    articles: list[NewsArticle] = Field(default_factory=list)

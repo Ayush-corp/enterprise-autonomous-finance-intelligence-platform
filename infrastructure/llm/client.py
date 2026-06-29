@@ -1,79 +1,85 @@
-from __future__ import annotations
+from typing import TypeVar
 
-from typing import Sequence, Type
-
-from openai import AsyncOpenAI
 from pydantic import BaseModel
 
-from app.config.settings import settings
-from infrastructure.llm.models import (
-    LLMMessage,
-    LLMResponse,
-    LLMUsage,
-)
+from app.core.exceptions import LLMProviderError
+from infrastructure.llm.models import LLMResult, LLMUsage
 from infrastructure.llm.provider import LLMProvider
 
 
-class LLMClient(LLMProvider):
+T = TypeVar("T", bound=BaseModel)
 
-    def __init__(self) -> None:
-        self._client = AsyncOpenAI(
-            api_key=settings.openai_api_key,
-        )
 
-    async def chat(
-        self,
-        *,
-        messages: Sequence[LLMMessage],
-        temperature: float = 0.0,
-    ) -> LLMResponse:
+class OpenAILLMProvider(LLMProvider):
+    name = "openai"
 
-        response = await self._client.chat.completions.create(
-            model=settings.openai_model,
-            temperature=temperature,
-            messages=[
-                {
-                    "role": m.role,
-                    "content": m.content,
-                }
-                for m in messages
-            ],
-        )
+    def __init__(self, api_key: str, model: str, temperature: float, max_tokens: int) -> None:
+        if not api_key:
+            raise LLMProviderError("OpenAI API key is required for OpenAILLMProvider")
+        from openai import AsyncOpenAI
 
-        choice = response.choices[0]
+        self._client = AsyncOpenAI(api_key=api_key)
+        self._model = model
+        self._temperature = temperature
+        self._max_tokens = max_tokens
+
+    async def complete(self, system_prompt: str, user_prompt: str) -> LLMResult[BaseModel]:
+        try:
+            response = await self._client.chat.completions.create(
+                model=self._model,
+                temperature=self._temperature,
+                max_tokens=self._max_tokens,
+                messages=[
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user", "content": user_prompt},
+                ],
+            )
+        except Exception as exc:
+            raise LLMProviderError(str(exc)) from exc
 
         usage = response.usage
-
-        return LLMResponse(
-            model=response.model,
-            finish_reason=choice.finish_reason,
-            content=choice.message.content,
+        return LLMResult(
+            content=response.choices[0].message.content or "",
             usage=LLMUsage(
-                prompt_tokens=usage.prompt_tokens,
-                completion_tokens=usage.completion_tokens,
-                total_tokens=usage.total_tokens,
+                prompt_tokens=getattr(usage, "prompt_tokens", None),
+                completion_tokens=getattr(usage, "completion_tokens", None),
+                total_tokens=getattr(usage, "total_tokens", None),
             ),
+            metadata={"model": self._model, "provider": self.name},
         )
 
-    async def structured_chat(
+    async def structured(
         self,
-        *,
-        messages: Sequence[LLMMessage],
-        response_model: Type[BaseModel],
-        temperature: float = 0.0,
-    ) -> BaseModel:
+        system_prompt: str,
+        user_prompt: str,
+        response_model: type[T],
+    ) -> LLMResult[T]:
+        try:
+            response = await self._client.beta.chat.completions.parse(
+                model=self._model,
+                temperature=self._temperature,
+                max_tokens=self._max_tokens,
+                messages=[
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user", "content": user_prompt},
+                ],
+                response_format=response_model,
+            )
+        except Exception as exc:
+            raise LLMProviderError(str(exc)) from exc
 
-        response = await self._client.beta.chat.completions.parse(
-            model=settings.openai_model,
-            temperature=temperature,
-            messages=[
-                {
-                    "role": m.role,
-                    "content": m.content,
-                }
-                for m in messages
-            ],
-            response_format=response_model,
+        message = response.choices[0].message
+        parsed = message.parsed
+        if parsed is None:
+            raise LLMProviderError("OpenAI returned no parsed structured output")
+
+        usage = response.usage
+        return LLMResult(
+            structured=parsed,
+            usage=LLMUsage(
+                prompt_tokens=getattr(usage, "prompt_tokens", None),
+                completion_tokens=getattr(usage, "completion_tokens", None),
+                total_tokens=getattr(usage, "total_tokens", None),
+            ),
+            metadata={"model": self._model, "provider": self.name},
         )
-
-        return response.choices[0].message.parsed

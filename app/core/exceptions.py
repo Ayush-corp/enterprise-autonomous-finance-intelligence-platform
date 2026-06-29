@@ -1,5 +1,9 @@
-class InvestingAgentError(Exception):
-    """Base exception for the application."""
+class InvestorOSError(Exception):
+    """Base exception for InvestorOS."""
+
+
+class InvestingAgentError(InvestorOSError):
+    """Backward-compatible base exception name."""
 
 
 # -----------------------------
@@ -14,7 +18,11 @@ class ConfigurationError(InvestingAgentError):
 # Infrastructure
 # -----------------------------
 
-class ExternalServiceError(InvestingAgentError):
+class ExternalProviderError(InvestorOSError):
+    """External provider failed."""
+
+
+class ExternalServiceError(ExternalProviderError):
     """Base class for external services."""
 
 
@@ -26,8 +34,12 @@ class NewsServiceError(ExternalServiceError):
     """News provider failed."""
 
 
-class LLMServiceError(ExternalServiceError):
+class LLMProviderError(ExternalProviderError):
     """LLM provider failed."""
+
+
+class LLMServiceError(LLMProviderError):
+    """Backward-compatible LLM error name."""
 
 
 class MemoryServiceError(ExternalServiceError):
@@ -38,13 +50,21 @@ class MemoryServiceError(ExternalServiceError):
 # Business
 # -----------------------------
 
-class ValidationError(InvestingAgentError):
+class ValidationError(InvestorOSError):
     """Invalid user input."""
 
 
-class AgentExecutionError(InvestingAgentError):
+class AgentExecutionError(InvestorOSError):
     """Agent execution failed."""
 
 
-class RecommendationError(InvestingAgentError):
+class InvalidGraphStateError(InvestorOSError):
+    """Graph state is missing required upstream data."""
+
+
+class DataUnavailableError(InvestorOSError):
+    """Required data was unavailable."""
+
+
+class RecommendationError(InvestorOSError):
     """Recommendation generation failed."""

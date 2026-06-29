@@ -13,7 +13,6 @@ from domain.technical import TechnicalAnalysis
 
 class GraphState(BaseModel):
     symbol: str
-
     market: MarketSnapshot | None = None
     news: NewsAnalysis | None = None
     technical: TechnicalAnalysis | None = None
@@ -23,5 +22,4 @@ class GraphState(BaseModel):
     risk: RiskAssessment | None = None
     reflection: ReflectionAnalysis | None = None
     recommendation: Recommendation | None = None
-
     metadata: dict[str, object] = Field(default_factory=dict)

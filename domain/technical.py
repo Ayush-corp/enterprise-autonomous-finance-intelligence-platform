@@ -1,15 +1,11 @@
-from __future__ import annotations
-
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, Field
 
 
 class TechnicalAnalysis(BaseModel):
-    model_config = ConfigDict(extra="forbid")
-
     symbol: str
     trend: str
     momentum: str
     support: float
     resistance: float
-    confidence: float
+    confidence: float = Field(ge=0.0, le=1.0)
     summary: str

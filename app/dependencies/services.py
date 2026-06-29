@@ -1,46 +1,38 @@
 from functools import lru_cache
 
-from infrastructure.market.yfinance_service import (
-    YFinanceMarketService,
-)
-
-from infrastructure.news.news_service import (
-    DummyNewsService,
-)
-
-from infrastructure.llm.openai_service import (
-    OpenAIService,
-)
-
-from infrastructure.memory.chroma_repository import (
-    ChromaMemoryRepository,
-)
-
-from infrastructure.memory.memory_service import (
-    DefaultMemoryService,
-)
+from app.config import settings
+from infrastructure.llm.client import OpenAILLMProvider
+from infrastructure.llm.mock_provider import MockLLMProvider
+from infrastructure.llm.provider import LLMProvider
+from infrastructure.market.mock_provider import MockMarketDataProvider
+from infrastructure.market.provider import MarketDataProvider
+from infrastructure.news.mock_provider import MockNewsProvider
+from infrastructure.news.provider import NewsProvider
+from services.llm.service import LLMService
 
 
 @lru_cache
-def get_market_service():
-    return YFinanceMarketService()
+def get_llm_provider() -> LLMProvider:
+    if settings.enable_live_llm and settings.llm_provider.lower() == "openai" and settings.openai_api_key:
+        return OpenAILLMProvider(
+            api_key=settings.openai_api_key,
+            model=settings.openai_model or settings.llm_model,
+            temperature=settings.temperature,
+            max_tokens=settings.max_tokens,
+        )
+    return MockLLMProvider()
 
 
 @lru_cache
-def get_news_service():
-    return DummyNewsService()
+def get_llm_service() -> LLMService:
+    return LLMService(get_llm_provider())
 
 
 @lru_cache
-def get_llm_service():
-    return OpenAIService()
+def get_market_provider() -> MarketDataProvider:
+    return MockMarketDataProvider()
 
 
 @lru_cache
-def get_memory_service():
-
-    repository = ChromaMemoryRepository()
-
-    return DefaultMemoryService(
-        repository,
-    )
+def get_news_provider() -> NewsProvider:
+    return MockNewsProvider()

@@ -1,19 +1,11 @@
-from __future__ import annotations
-
 from abc import ABC, abstractmethod
+
+from domain.news import NewsAnalysis
 
 
 class NewsProvider(ABC):
+    name: str
 
     @abstractmethod
-    async def fetch(
-        self,
-        *,
-        symbol: str,
-        company_name: str | None,
-        limit: int,
-    ) -> str:
-        """
-        Returns serialized news context
-        ready for prompt injection.
-        """
+    async def analyze(self, symbol: str) -> NewsAnalysis:
+        raise NotImplementedError
