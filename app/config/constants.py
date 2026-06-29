@@ -1,20 +1,6 @@
-BUY = "BUY"
-SELL = "SELL"
-HOLD = "HOLD"
-
-LOW = "LOW"
-MEDIUM = "MEDIUM"
-HIGH = "HIGH"
-
-SUPPORTED_LLMS = {
-    "openai",
-    "google",
-}
-
-SUPPORTED_MARKET_PROVIDERS = {
-    "yfinance",
-}
-
-SUPPORTED_VECTOR_DBS = {
-    "chroma",
-}
+DEFAULT_LOOKBACK_DAYS = 90
+SMA_WINDOW = 20
+RSI_PERIOD = 14
+MACD_FAST = 12
+MACD_SLOW = 26
+MACD_SIGNAL = 9

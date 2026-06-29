@@ -1,10 +1,10 @@
 from abc import ABC, abstractmethod
 
-from domain import NewsArticle
+from domain.news import NewsAnalysis
 
 
 class NewsService(ABC):
 
     @abstractmethod
-    def get_news(self, symbol: str) -> list[NewsArticle]:
+    async def get_news(self, symbol: str) -> NewsAnalysis:
         pass
