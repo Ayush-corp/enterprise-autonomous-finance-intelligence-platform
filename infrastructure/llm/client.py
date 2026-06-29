@@ -1,43 +1,79 @@
 from __future__ import annotations
 
-from typing import Type
+from typing import Sequence, Type
 
 from openai import AsyncOpenAI
 from pydantic import BaseModel
 
 from app.config.settings import settings
+from infrastructure.llm.models import (
+    LLMMessage,
+    LLMResponse,
+    LLMUsage,
+)
+from infrastructure.llm.provider import LLMProvider
 
 
-class LLMClient:
+class LLMClient(LLMProvider):
 
-    def __init__(self):
-
-        self.client = AsyncOpenAI(
+    def __init__(self) -> None:
+        self._client = AsyncOpenAI(
             api_key=settings.openai_api_key,
         )
 
-    async def structured_completion(
+    async def chat(
         self,
-        prompt: str,
-        schema: Type[BaseModel],
-    ):
+        *,
+        messages: Sequence[LLMMessage],
+        temperature: float = 0.0,
+    ) -> LLMResponse:
 
-        response = await self.client.responses.parse(
+        response = await self._client.chat.completions.create(
             model=settings.openai_model,
-            input=prompt,
-            text_format=schema,
+            temperature=temperature,
+            messages=[
+                {
+                    "role": m.role,
+                    "content": m.content,
+                }
+                for m in messages
+            ],
         )
 
-        return response.output_parsed
+        choice = response.choices[0]
 
-    async def complete(
-        self,
-        prompt: str,
-    ):
+        usage = response.usage
 
-        response = await self.client.responses.create(
-            model=settings.openai_model,
-            input=prompt,
+        return LLMResponse(
+            model=response.model,
+            finish_reason=choice.finish_reason,
+            content=choice.message.content,
+            usage=LLMUsage(
+                prompt_tokens=usage.prompt_tokens,
+                completion_tokens=usage.completion_tokens,
+                total_tokens=usage.total_tokens,
+            ),
         )
 
-        return response.output[0].content[0].parsed
+    async def structured_chat(
+        self,
+        *,
+        messages: Sequence[LLMMessage],
+        response_model: Type[BaseModel],
+        temperature: float = 0.0,
+    ) -> BaseModel:
+
+        response = await self._client.beta.chat.completions.parse(
+            model=settings.openai_model,
+            temperature=temperature,
+            messages=[
+                {
+                    "role": m.role,
+                    "content": m.content,
+                }
+                for m in messages
+            ],
+            response_format=response_model,
+        )
+
+        return response.choices[0].message.parsed
