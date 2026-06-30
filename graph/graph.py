@@ -9,19 +9,7 @@ from domain.recommendation import Recommendation
 from domain.reflection import ReflectionAnalysis
 from domain.risk import RiskAssessment
 from domain.technical import TechnicalAnalysis
-from app.core.exceptions import InvalidGraphStateError
-
-
-def coerce_state(state: GraphState | dict[str, object]) -> GraphState:
-    if isinstance(state, GraphState):
-        return state
-    return GraphState.model_validate(state)
-
-
-def require_fields(state: GraphState, *fields: str) -> None:
-    missing = [field for field in fields if getattr(state, field) is None]
-    if missing:
-        raise InvalidGraphStateError(f"Graph state missing required field(s): {', '.join(missing)}")
+from graph.nodes import coerce_state, require_fields
 
 
 def _prompt(state: GraphState, task: str) -> str:

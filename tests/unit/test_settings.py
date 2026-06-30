@@ -1,18 +1,5 @@
 from app.config import settings
 
-print(settings.app_name)
-
-print(settings.environment)
-
-print(settings.llm_provider)
-
-print(settings.llm_model)
-
-print(settings.market_provider)
-
-
-from app.config import settings
-
 
 def test_settings_app_name():
     """Test that app_name is configured"""

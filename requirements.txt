@@ -1,7 +1,4 @@
 langgraph
-langchain
-langchain-openai
-langchain-google-genai
 
 fastapi
 uvicorn
@@ -10,18 +7,8 @@ pydantic
 pydantic-settings
 
 python-dotenv
-
-yfinance
-pandas
-numpy
-
-chromadb
-
-httpx
+openai
 
 structlog
 
 tenacity
-
-pytest
-pytest-asyncio
