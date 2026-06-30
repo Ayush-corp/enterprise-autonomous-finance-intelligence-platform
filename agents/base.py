@@ -16,6 +16,11 @@ OutputT = TypeVar("OutputT")
 class BaseAgent(ABC, Generic[InputT, PreparedT, OutputT]):
     name: str
 
+    def __class_getitem__(cls, params):
+        if isinstance(params, tuple) and len(params) == 2:
+            params = (params[0], params[0], params[1])
+        return super().__class_getitem__(params)
+
     def __init__(self, *, max_attempts: int = 3) -> None:
         self._max_attempts = max_attempts
         self._logger = structlog.get_logger(self.__class__.__name__)

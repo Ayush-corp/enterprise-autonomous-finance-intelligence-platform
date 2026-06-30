@@ -1,93 +1,114 @@
-from dataclasses import dataclass
-
 from langgraph.graph import END, START, StateGraph
 
-from agents.committee_agent import CommitteeAgent
-from agents.forecast_agent import ForecastAgent
-from agents.fundamental_agent import FundamentalAgent
-from agents.macro_agent import MacroAgent
-from agents.market_agent import MarketAgent
-from agents.news_agent import NewsAgent
-from agents.reflection_agent import ReflectionAgent
-from agents.risk_agent import RiskAgent
-from agents.technical_agent import TechnicalAgent
 from app.dependencies.services import get_llm_service, get_market_provider, get_news_provider
+from domain.forecast import Forecast
+from domain.fundamental import FundamentalAnalysis
 from domain.graph_state import GraphState
-from graph.nodes import coerce_state, require_fields
+from domain.macro import MacroAnalysis
+from domain.recommendation import Recommendation
+from domain.reflection import ReflectionAnalysis
+from domain.risk import RiskAssessment
+from domain.technical import TechnicalAnalysis
+from app.core.exceptions import InvalidGraphStateError
 
 
-@dataclass(frozen=True)
-class AgentBundle:
-    market: MarketAgent
-    news: NewsAgent
-    technical: TechnicalAgent
-    fundamental: FundamentalAgent
-    macro: MacroAgent
-    forecast: ForecastAgent
-    risk: RiskAgent
-    reflection: ReflectionAgent
-    committee: CommitteeAgent
+def coerce_state(state: GraphState | dict[str, object]) -> GraphState:
+    if isinstance(state, GraphState):
+        return state
+    return GraphState.model_validate(state)
 
 
-def default_agents() -> AgentBundle:
+def require_fields(state: GraphState, *fields: str) -> None:
+    missing = [field for field in fields if getattr(state, field) is None]
+    if missing:
+        raise InvalidGraphStateError(f"Graph state missing required field(s): {', '.join(missing)}")
+
+
+def _prompt(state: GraphState, task: str) -> str:
+    return f"Symbol: {state.symbol}\n\nTask: {task}\n\nState:\n{state.model_dump_json(indent=2)}"
+
+
+def build_graph():
     llm_service = get_llm_service()
-    return AgentBundle(
-        market=MarketAgent(get_market_provider()),
-        news=NewsAgent(get_news_provider()),
-        technical=TechnicalAgent(llm_service),
-        fundamental=FundamentalAgent(llm_service),
-        macro=MacroAgent(llm_service),
-        forecast=ForecastAgent(llm_service),
-        risk=RiskAgent(llm_service),
-        reflection=ReflectionAgent(llm_service),
-        committee=CommitteeAgent(llm_service),
-    )
-
-
-def build_graph(agents: AgentBundle | None = None):
-    agent_bundle = agents or default_agents()
+    market_provider = get_market_provider()
+    news_provider = get_news_provider()
     builder = StateGraph(GraphState)
 
     async def market_node(state):
         graph_state = coerce_state(state)
-        return {"market": await agent_bundle.market.run(graph_state.symbol)}
+        return {"market": await market_provider.get_snapshot(graph_state.symbol)}
 
     async def news_node(state):
         graph_state = coerce_state(state)
-        return {"news": await agent_bundle.news.run(graph_state.symbol)}
+        return {"news": await news_provider.analyze(graph_state.symbol)}
 
     async def technical_node(state):
         graph_state = coerce_state(state)
         require_fields(graph_state, "market")
-        return {"technical": await agent_bundle.technical.run(graph_state)}
+        result = await llm_service.structured(
+            "You are a technical analyst.",
+            _prompt(graph_state, "Produce technical analysis."),
+            TechnicalAnalysis,
+        )
+        return {"technical": result.structured}
 
     async def fundamental_node(state):
         graph_state = coerce_state(state)
-        return {"fundamental": await agent_bundle.fundamental.run(graph_state)}
+        result = await llm_service.structured(
+            "You are a fundamental analyst.",
+            _prompt(graph_state, "Produce fundamental analysis."),
+            FundamentalAnalysis,
+        )
+        return {"fundamental": result.structured}
 
     async def macro_node(state):
         graph_state = coerce_state(state)
-        return {"macro": await agent_bundle.macro.run(graph_state)}
+        result = await llm_service.structured(
+            "You are a macro analyst.",
+            _prompt(graph_state, "Produce macro analysis."),
+            MacroAnalysis,
+        )
+        return {"macro": result.structured}
 
     async def forecast_node(state):
         graph_state = coerce_state(state)
         require_fields(graph_state, "market", "news", "technical", "fundamental", "macro")
-        return {"forecast": await agent_bundle.forecast.run(graph_state)}
+        result = await llm_service.structured(
+            "You forecast short-term equity direction.",
+            _prompt(graph_state, "Produce a forecast."),
+            Forecast,
+        )
+        return {"forecast": result.structured}
 
     async def risk_node(state):
         graph_state = coerce_state(state)
         require_fields(graph_state, "forecast")
-        return {"risk": await agent_bundle.risk.run(graph_state)}
+        result = await llm_service.structured(
+            "You assess investment risk.",
+            _prompt(graph_state, "Produce a risk assessment."),
+            RiskAssessment,
+        )
+        return {"risk": result.structured}
 
     async def reflection_node(state):
         graph_state = coerce_state(state)
         require_fields(graph_state, "forecast", "risk")
-        return {"reflection": await agent_bundle.reflection.run(graph_state)}
+        result = await llm_service.structured(
+            "You critique investment analysis.",
+            _prompt(graph_state, "Produce reflection analysis."),
+            ReflectionAnalysis,
+        )
+        return {"reflection": result.structured}
 
     async def committee_node(state):
         graph_state = coerce_state(state)
         require_fields(graph_state, "forecast", "risk", "reflection")
-        return {"recommendation": await agent_bundle.committee.run(graph_state)}
+        result = await llm_service.structured(
+            "You are an investment committee.",
+            _prompt(graph_state, "Produce a final recommendation."),
+            Recommendation,
+        )
+        return {"recommendation": result.structured}
 
     builder.add_node("market", market_node)
     builder.add_node("news", news_node)

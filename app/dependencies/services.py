@@ -1,6 +1,6 @@
 from functools import lru_cache
 
-from app.config import settings
+from app.config import get_settings
 from infrastructure.llm.client import OpenAILLMProvider
 from infrastructure.llm.mock_provider import MockLLMProvider
 from infrastructure.llm.provider import LLMProvider
@@ -13,6 +13,7 @@ from services.llm.service import LLMService
 
 @lru_cache
 def get_llm_provider() -> LLMProvider:
+    settings = get_settings()
     if settings.enable_live_llm and settings.llm_provider.lower() == "openai" and settings.openai_api_key:
         return OpenAILLMProvider(
             api_key=settings.openai_api_key,

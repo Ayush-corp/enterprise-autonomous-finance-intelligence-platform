@@ -87,3 +87,7 @@ def get_settings() -> Settings:
 
 
 settings = get_settings()
+
+
+def __getattr__(name: str):
+    return getattr(settings, name)

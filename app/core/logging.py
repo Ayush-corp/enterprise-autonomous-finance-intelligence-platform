@@ -11,7 +11,7 @@ def configure_logging() -> None:
     Configure application-wide structured logging.
     """
     settings = get_settings()
-    log_level = settings.LOG_LEVEL.upper()
+    log_level = settings.log_level.upper()
     
     logging.basicConfig(
         format="%(message)s",

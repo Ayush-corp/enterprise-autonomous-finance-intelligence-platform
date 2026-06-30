@@ -12,6 +12,11 @@ class LLMUsage(BaseModel):
     total_tokens: int | None = None
 
 
+class LLMMessage(BaseModel):
+    role: str
+    content: str
+
+
 class LLMResult(BaseModel, Generic[T]):
     content: str | None = None
     structured: T | None = None
