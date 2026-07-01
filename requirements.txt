@@ -8,6 +8,8 @@ pydantic-settings
 
 python-dotenv
 openai
+httpx
+yfinance
 
 structlog
 

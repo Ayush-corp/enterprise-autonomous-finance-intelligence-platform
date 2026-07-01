@@ -7,5 +7,5 @@ class MarketDataProvider(ABC):
     name: str
 
     @abstractmethod
-    async def get_snapshot(self, symbol: str) -> MarketSnapshot:
+    async def get_snapshot(self, symbol: str, country: str = "US") -> MarketSnapshot:
         raise NotImplementedError

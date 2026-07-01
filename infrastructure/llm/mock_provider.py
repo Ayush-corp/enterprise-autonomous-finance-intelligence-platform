@@ -3,6 +3,7 @@ from typing import TypeVar
 
 from pydantic import BaseModel
 
+from domain.analysis import AnalysisSynthesis
 from domain.forecast import Forecast
 from domain.fundamental import FundamentalAnalysis
 from domain.macro import MacroAnalysis
@@ -44,6 +45,15 @@ class MockLLMProvider(LLMProvider):
         return match.group(1).upper() if match else "UNKNOWN.NS"
 
     def _payload_for(self, response_model: type[T], symbol: str) -> dict[str, object]:
+        if response_model is AnalysisSynthesis:
+            return {
+                "fundamental": self._payload_for(FundamentalAnalysis, symbol),
+                "macro": self._payload_for(MacroAnalysis, symbol),
+                "forecast": self._payload_for(Forecast, symbol),
+                "risk": self._payload_for(RiskAssessment, symbol),
+                "reflection": self._payload_for(ReflectionAnalysis, symbol),
+                "recommendation": self._payload_for(Recommendation, symbol),
+            }
         if response_model is TechnicalAnalysis:
             return {
                 "symbol": symbol,

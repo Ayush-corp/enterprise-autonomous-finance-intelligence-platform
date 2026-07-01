@@ -13,6 +13,8 @@ from domain.technical import TechnicalAnalysis
 
 class GraphState(BaseModel):
     symbol: str
+    country: str = "US"
+    horizon: str = "7D"
     market: MarketSnapshot | None = None
     news: NewsAnalysis | None = None
     technical: TechnicalAnalysis | None = None

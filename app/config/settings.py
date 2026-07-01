@@ -41,12 +41,15 @@ class Settings(BaseSettings):
     # ----------------------------
 
     market_provider: str = "mock"
+    massive_api_key: str = ""
+    massive_base_url: str = "https://api.polygon.io"
 
     # ----------------------------
     # News
     # ----------------------------
 
     news_provider: str = "mock"
+    news_api_key: str = ""
 
     # ----------------------------
     # Memory
@@ -55,6 +58,7 @@ class Settings(BaseSettings):
     vector_db: str = "chroma"
 
     chroma_path: str = "./.chroma"
+    sqlite_path: str = "data/investoros.sqlite3"
 
     # ----------------------------
     # Network
@@ -63,6 +67,14 @@ class Settings(BaseSettings):
     request_timeout: int = 30
 
     max_retries: int = 3
+    analysis_cache_ttl_seconds: int = 300
+    enable_scheduler: bool = False
+    scheduler_timezone: str = "Asia/Kolkata"
+    daily_prediction_time: str = "16:15"
+    data_refresh_time: str = "08:30"
+    evaluation_time: str = "17:00"
+    prediction_horizons: str = "1D,7D,30D,90D"
+    default_benchmark_symbol: str = "^NSEI"
 
     # ----------------------------
     # Logging

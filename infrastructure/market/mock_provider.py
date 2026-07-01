@@ -5,7 +5,7 @@ from infrastructure.market.provider import MarketDataProvider
 class MockMarketDataProvider(MarketDataProvider):
     name = "mock_market"
 
-    async def get_snapshot(self, symbol: str) -> MarketSnapshot:
+    async def get_snapshot(self, symbol: str, country: str = "US") -> MarketSnapshot:
         normalized_symbol = symbol.upper()
         current_price = 2520.0
         sma20 = 2488.0

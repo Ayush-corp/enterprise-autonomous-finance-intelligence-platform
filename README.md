@@ -51,3 +51,50 @@ Content-Type: application/json
 
 {"symbol": "RELIANCE.NS"}
 ```
+
+Country-aware routing:
+
+```http
+POST /api/v1/analyze
+Content-Type: application/json
+
+{"symbol": "RELIANCE", "country": "IN"}
+```
+
+`country="IN"` routes market data through `yfinance`; `country="US"` routes market data through Massive/Polygon.
+
+Watchlist:
+
+```http
+POST /api/v1/watchlist
+GET /api/v1/watchlist
+DELETE /api/v1/watchlist/{symbol}
+```
+
+Predictions:
+
+```http
+POST /api/v1/predictions/run
+GET /api/v1/predictions/latest
+GET /api/v1/predictions/{symbol}
+GET /api/v1/predictions/{symbol}/latest
+POST /api/v1/predictions/evaluate-due
+POST /api/v1/predictions/{prediction_id}/evaluate
+```
+
+Accuracy:
+
+```http
+GET /api/v1/accuracy
+GET /api/v1/accuracy/{symbol}?horizon=1D&days=90
+```
+
+CLI jobs:
+
+```powershell
+python scripts/seed_watchlist.py
+python scripts/run_daily_predictions.py
+python scripts/evaluate_due_predictions.py
+```
+
+Scheduler settings are disabled by default. Set `ENABLE_SCHEDULER=true` to run daily jobs inside the API process.
